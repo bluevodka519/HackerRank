@@ -1,107 +1,30 @@
-def valuation(reqArea, area, price):
-    # Write your code here
-    rou = []     #std
-    pm = []      #mean
-    ar = []         #cleaned area
-    pr = []         ##cleaned price
-    for i in range(0,len(area)):        #Data cleaning
-        complist = []
-        for _ in range (0,len(area)):
-            if area[i] == area[_] and _ != i:
-                complist.append(price[_])
-        if len(complist)>1:
-            pm = statistics.mean(complist)
-            rou = statistics.pstdev(complist)
-            if abs(price[i]-pm) <= 3*rou:
-                ar.append(area[i])
-                pr.append(price[i])
-        elif len(complist)==1:
-            continue
-        elif len(complist)==0:
-            ar.append(area[i])
-            pr.append(price[i])
-            
-    su = [] 
-    if len(ar) == 0:
-        r = round(reqArea*1000)
-    elif len(ar) == 1:
-        r = round(reqArea*pr[0]/ar[0])
-    elif len(ar)>1:
-        if reqArea in ar:
-            for i in range(0,len(ar)):
-                if ar[i] == reqArea:
-                    su.append(pr[i])
-            r = statistics.mean(su)
-        else:
-            m = 0
-            n = 0
-            msum = []
-            nsum = []
-            mlist = []
-            for _ in range(0,len(ar)):
-                mlist.append(ar[_] - reqArea)
-            maxminus = int(min(mlist))
-            miniplus = int(max(mlist))
-            for _ in range(0,len(ar)):
-                if mlist[_] < 0:
-                    if mlist[_] > maxminus:
-                        maxminus = mlist[_]
-                        m = _
-                if mlist[_] > 0:
-                    if mlist[_] < miniplus:
-                        miniplus = mlist[_]
-                        n = _
-                        
-            if reqArea > max(ar) or reqArea<min(ar):                #Special process for some special data
-                listn = []
-                newlist = list(set(mlist))
-                for _ in range(0,len(newlist)):
-                    listn.append(newlist[_]+reqArea)
-                listn.sort()
-                print(listn)
-                w=listn[1]      
-                x=listn[0]
-                y=listn[len(listn)-2]
-                z=listn[len(listn)-1]
-                print(newlist)
-                
-                print(listn)
-                if reqArea<min(ar) :
-                    m = w
-                    n = x
-                elif reqArea > max(ar):
-                    m = y
-                    n = z
-                for _ in range(0,len(ar)):
-                    if ar[_] == m:
-                        msum.append(pr[_])
-                    if ar[_] == n:
-                        nsum.append(pr[_])
-                if msum == []:
-                    for _ in range(0,len(ar)):
-                        if ar[_] == m:
-                            pm = pr[i]
-                else:
-                    pm = statistics.mean(msum)
-                if nsum == []:
-                    for _ in range(0,len(ar)):
-                        if ar[_] == n:
-                            pn = pr[i]
-                else:
-                    pn = statistics.mean(nsum)
-                r = round(pm+(reqArea-m)*(pn-pm)/(n-m))
-                        
-            else:                                       #Normal process for most of the problems
-                for i in range(0,len(ar)):
-                    if ar[i] == ar[m]:
-                        msum.append(pr[i])
-                    if ar[i] == ar[n]:
-                        nsum.append(pr[i])
-                pm = statistics.mean(msum)
-                pn = statistics.mean(nsum)
-                r = round(pm+(reqArea-ar[m])*(pn-pm)/(ar[n]-ar[m]))
-    if r< 1000:
-        r = round(1000)
-    elif r>1000000:
-        r = round(1000000)
-    return r
+    import pandas as pd
+    import numpy as np
+    dates = []
+    temp = []
+    i = 0
+    for i in range(readings):
+        datalist = i.split('\t')
+        dates.append(datalist[0])
+        temp.append(datalist[1])
+    #print (dates)
+    #print(temp)
+    df = pd.DataFrame(list(zip(dates,temp)))
+    columns = ['X','Y']
+    df['X'] = pd.to_datetime(df['X'])
+    missing_id = df.j.str.contains('^Missing')
+    missing_dates = df.i[missing_id]
+    m = df.index[missing_id]
+    df1 = df.drop(m)
+    x = df1['X'].map(dt.datetime.toordinal)
+    y = np.asarray(pd.to_numeric(df1['Y']))
+    
+    from sklearn.ensemble import GradientBoostingRegressor
+    lr = GradientBoostingRegressor()
+    lr.fit(x,y)
+    
+    x_test = df.X[m]
+    x_test1 = x_test.map(dt.datetime.toordinal)
+    y_pred = lr.predict(np.array(x_test1).reshape(-1,1))
+    for p in y_pred:
+        return p 
