@@ -1,0 +1,29 @@
+def calcMissing(readings):
+# Write your code here
+    import datetime as dt
+    import pandas as pd
+    import numpy as np
+    from sklearn.ensemble import GradientBoostingRegressor
+    dates = []
+    temp = []
+    i = 0
+    for i in readings:
+        datalist = i.split('\t')
+        dates.append(datalist[0])
+        temp.append(datalist[1])
+    df = pd.DataFrame(zip(dates,temp), 
+    columns =['X', 'Y'])
+    df['X'] = pd.to_datetime(df['X'])
+    missing_id = df.Y.str.contains('Missing')
+    missing_dates = df.X[missing_id]
+    m = df.index[missing_id]
+    df1 = df.drop(m)
+    df1['Date']=df1['X'].map(dt.datetime.toordinal)
+    x = df1[['Date']]
+    y = np.asarray(pd.to_numeric(df1['Y']))
+    lr = GradientBoostingRegressor()
+    lr.fit(x,y)
+    x_test = df.X[m].map(dt.datetime.toordinal)
+    y_pred = lr.predict(np.array(x_test).reshape(-1,1))
+    for p in y_pred:
+        print(p)
